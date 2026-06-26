@@ -55,7 +55,7 @@ To provide noise-canceling study aids without relying on network streams, Pheoni
 * **Brown Noise**: Generated dynamically by integrating white noise. The algorithm integration formula updates output sample $y(n)$ from white noise input $x(n)$ using a single-pole filter:
   $$y(n) = \frac{y(n-1) + 0.02 \cdot x(n)}{1.02}$$
   The signal is then multiplied by a compensation gain factor of $3.5$ to balance volume.
-* **40Hz Binaural Beats**: Employs two standard `OscillatorNode` sources. The left channel is panned and set to $200\text{ Hz}$, and the right channel is set to $240\text{ Hz}$. When listended to through headphones, the auditory cortex perceives a binaural difference of $40\text{ Hz}$, which matches the frequency of Gamma brainwaves associated with high concentration.
+* **40Hz Binaural Beats**: Employs two standard `OscillatorNode` sources. The left channel is panned and set to $200\text{ Hz}$, and the right channel is set to $240\text{ Hz}$. When listened to through headphones, the auditory cortex perceives a binaural difference of $40\text{ Hz}$, which matches the frequency of Gamma brainwaves associated with high concentration.
 * **Synthesized Rain**: Combines a low-pass filtered brown noise node ($400\text{ Hz}$ cutoff) with rare, random high-amplitude impulse spikes ($p > 0.997$ per sample) routed through a high-pass filter ($1200\text{ Hz}$ cutoff) to simulate rain droplets hitting leaves.
 
 ### 2. Leitner System Recall Spacing Algorithm
@@ -77,6 +77,36 @@ To store documents securely without database servers, Pheonix implements the fol
 [Document Grid Updates] <── [Put inside Object Store] <── [IndexedDB write transaction]
 ```
 Files remain sandbox-isolated, meaning they do not leave the client device, preserving privacy and enabling complete offline operation.
+
+---
+
+## 📖 Detailed Feature Guide
+
+### 1. Generating & Following Your Study Plan
+* **Configure Target**: Go to the **Study Planner** tab in the sidebar.
+* **Select Parameters**: Choose your target exam from the dropdown (UPSC, JEE, NEET, GRE, GATE, or Custom). Input your target study hours per day (e.g., 6 hours) and your revision timeline.
+* **Review Schedule**: Click **"Generate Study Schedule"** to display your custom 7-day weekly calendar.
+* **Sync Dashboard**: Click **"Apply Plan to Dashboard"**. Pheonix saves this configuration and highlights the current day's target on your main **Dashboard** tab.
+
+### 2. Operating the Pomodoro Focus Timer
+* **Set Intervals**: Navigate to **Pomodoro Focus**. Toggle between default intervals (Pomodoro: 25m, Short Break: 5m, Long Break: 15m) or click **"Custom Timings"** to set custom minute intervals.
+* **Ambient Audio Synthesis**: Click any of the four ambient sound cards (Brown Noise, Binaural Beats, Forest Rain, Lo-Fi Chill) to trigger procedural offline focus audio. Use the volume slider to adjust.
+* **Link Spotify**: Copy the link to your favorite playlist, track, or album from Spotify. Paste it in the input field under **Personal Spotify Hub** and click **"Load"**. The app will parse the link type and mount a custom dark-themed Spotify player.
+
+### 3. Reviewing Flashcards (Active Recall)
+* **Select a Deck**: Go to the **Flashcards** tab. Click **"Study"** on any of the three pre-seeded decks or click **"Create New Deck"** at the top right to start a new deck.
+* **Card Interaction**: The active card is displayed. Read the question, then click the card to flip it with a 3D animation and reveal the answer.
+* **Self-Assessment Rating**: Select one of the three options:
+  * *Forgot It*: Pushes the card back to the front of your study queue.
+  * *Struggled*: Spreads the card out for sooner review.
+  * *Mastered*: Moves the card to your completed queue and marks it as Mastered.
+* **Add Cards**: Click **"Add Card"** at the top right of the study panel to append custom formula or concept pairs.
+
+### 4. Uploading & Accessing Documents (Local Hub)
+* **Save Files**: Navigate to **Document Hub**.
+* **Upload Notes**: Select your notes file or drag-and-drop it directly into the upload box. Supporting PDFs, images, text, and docx notes (Max 15MB).
+* **Retrieve Documents**: Files are rendered in a clean grid showing upload date, file type, and file size. Click any PDF or file to read, study, or download.
+* **Delete Items**: Click the trash icon next to a file to delete it from the browser's persistent IndexedDB database.
 
 ---
 
