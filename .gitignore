@@ -1,0 +1,9 @@
+# IDE/Local Configurations
+.gemini/
+.system_generated/
+*.log
+.DS_Store
+
+# Temporary files
+temp/
+tmp/

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pheonix-Study Companion</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <div id="app-container">
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="glass">
+      <div class="sidebar-logo" style="margin-bottom: 2.5rem; display: flex; justify-content: center; padding: 0.25rem;">
+        <div style="background: #ffffff; padding: 0.5rem; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); display: flex; align-items: center; justify-content: center; width: 100%; border: 1px solid rgba(255,255,255,0.1);">
+          <img src="logo.png" alt="Pheonix Logo" style="width: 100%; height: auto; max-height: 70px; object-fit: contain;">
+        </div>
+      </div>
+
+      <nav class="sidebar-menu">
+        <li class="menu-item active" data-view="dashboard">
+          <button><i data-lucide="layout-dashboard"></i><span>Dashboard</span></button>
+        </li>
+        <li class="menu-item" data-view="planner">
+          <button><i data-lucide="calendar"></i><span>Study Planner</span></button>
+        </li>
+        <li class="menu-item" data-view="pomodoro">
+          <button><i data-lucide="timer"></i><span>Pomodoro Focus</span></button>
+        </li>
+        <li class="menu-item" data-view="flashcards">
+          <button><i data-lucide="layers"></i><span>Flashcards</span></button>
+        </li>
+        <li class="menu-item" data-view="library">
+          <button><i data-lucide="folder-open"></i><span>Document Hub</span></button>
+        </li>
+      </nav>
+
+      <div class="sidebar-footer">
+        <li class="menu-item" id="settings-trigger">
+          <button><i data-lucide="settings"></i><span>Settings</span></button>
+        </li>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main id="main-content">
+      
+      <!-- 1. DASHBOARD VIEW -->
+      <section id="dashboard-view" class="view-section active">
+        <div class="view-header">
+          <h1 class="view-title">Welcome back, Scholar</h1>
+          <p class="view-subtitle">Stay consistent. Every study block brings you closer to your goals.</p>
+        </div>
+
+        <div class="stats-strip">
+          <div class="stat-box glass">
+            <div class="stat-icon primary"><i data-lucide="clock"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="dash-stat-focus">0h 0m</span>
+              <span class="stat-label">Total Focus Time</span>
+            </div>
+          </div>
+          <div class="stat-box glass">
+            <div class="stat-icon secondary"><i data-lucide="award"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="dash-stat-exam">None Selected</span>
+              <span class="stat-label">Target Exam</span>
+            </div>
+          </div>
+          <div class="stat-box glass">
+            <div class="stat-icon success"><i data-lucide="copy"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="dash-stat-cards">0</span>
+              <span class="stat-label">Total Flashcards</span>
+            </div>
+          </div>
+          <div class="stat-box glass">
+            <div class="stat-icon accent"><i data-lucide="file-text"></i></div>
+            <div class="stat-info">
+              <span class="stat-value" id="dash-stat-docs">0</span>
+              <span class="stat-label">Stored Docs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-dashboard">
+          <!-- Main Left Panel: Active focus summary -->
+          <div class="dashboard-card glass">
+            <h3 class="view-subtitle" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 0.5rem;">Current Goal</h3>
+            <h2 id="dash-active-task-title" style="font-family:'Outfit', sans-serif; font-size:1.5rem; margin-bottom:1rem;">Setup Your Daily Plan</h2>
+            
+            <div id="dash-weekly-schedule-overview">
+              <p style="color: var(--text-secondary); line-height: 1.6;">No schedule created yet. Navigate to the <strong>Study Planner</strong> tab to select your competitive exam and receive structure suggestions to maximize your performance.</p>
+            </div>
+          </div>
+
+          <!-- Main Right Panel: Quick tools -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="dashboard-card glass">
+              <h3 style="font-family:'Outfit', sans-serif; font-size: 1.1rem; margin-bottom: 1rem;"><i data-lucide="flame" style="color: var(--accent); vertical-align: middle; margin-right: 0.5rem;"></i>Focus Streak</h3>
+              <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5;">Maintain your streak! Complete at least 2 Pomodoro blocks daily to grow your focus level.</p>
+              <div id="streak-gauge" style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                <!-- Generated in JS -->
+              </div>
+            </div>
+
+            <div class="dashboard-card glass" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(6, 182, 212, 0.1)); border-color: rgba(99, 102, 241, 0.2);">
+              <h3 style="font-family:'Outfit', sans-serif; font-size: 1.1rem; margin-bottom: 0.5rem;"><i data-lucide="lightbulb" style="color: var(--warning); vertical-align: middle; margin-right: 0.5rem;"></i>Competitive Tip</h3>
+              <p id="dash-random-tip" style="font-size: 0.9rem; line-height: 1.5; color: var(--text-primary);">"Mock tests are not for testing knowledge, but for strategy optimization. Review errors immediately."</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. STUDY PLANNER VIEW -->
+      <section id="planner-view" class="view-section">
+        <div class="view-header">
+          <h1 class="view-title">Smart Study Planner</h1>
+          <p class="view-subtitle">Tailor your study schedules specifically for high-intensity competitive examinations.</p>
+        </div>
+
+        <div class="planner-form-card glass">
+          <h3 style="font-family: 'Outfit', sans-serif; margin-bottom: 1.25rem;">Generate Study Suggestion Plan</h3>
+          
+          <div class="grid-columns-3" style="margin-bottom: 1.25rem;">
+            <div class="form-group">
+              <label class="form-label" for="planner-exam-select">Competitive Target Exam</label>
+              <select id="planner-exam-select" class="form-input">
+                <option value="upsc">UPSC Civil Services (General Studies + CSAT)</option>
+                <option value="jee">JEE Main & Advanced (Engineering)</option>
+                <option value="neet">NEET (Medical Entrance)</option>
+                <option value="gre">GRE/GMAT (Graduate Studies)</option>
+                <option value="gate">GATE (Post Graduate Engineering)</option>
+                <option value="custom">Custom Syllabus / Other Exams</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="planner-hours-input">Target Focus (Hours per day)</label>
+              <input type="number" id="planner-hours-input" class="form-input" min="2" max="16" value="6">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="planner-timeline-select">Preparation Timeline</label>
+              <select id="planner-timeline-select" class="form-input">
+                <option value="1">1 Month (Sprint Revision)</option>
+                <option value="3" selected>3 Months (Core Intensive)</option>
+                <option value="6">6 Months (Standard Syllabus Build)</option>
+                <option value="12">12 Months (Comprehensive Foundation)</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="planner-btn-generate" class="btn btn-primary"><i data-lucide="sparkles"></i>Generate Study Schedule</button>
+        </div>
+
+        <div id="planner-suggestions-box" class="suggestions-card glass" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <h2 id="suggestions-exam-title" style="font-family: 'Outfit', sans-serif; font-size: 1.5rem;">UPSC Civil Services Syllabus suggestion</h2>
+              <p id="suggestions-exam-meta" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">Structured Study Pattern | 6 Hours/Day Target</p>
+            </div>
+            <button id="planner-btn-apply" class="btn"><i data-lucide="check-circle"></i>Apply Plan to Dashboard</button>
+          </div>
+
+          <div class="alert alert-info">
+            <i data-lucide="info" style="margin-top: 2px;"></i>
+            <div>
+              <strong>Strategy Advice:</strong>
+              <span id="suggestions-strategy-text">Syllabus breakdown focus on daily mocks and notes revision.</span>
+            </div>
+          </div>
+
+          <h3 style="font-family:'Outfit', sans-serif; font-size:1.1rem; margin-top:1.5rem; margin-bottom:1rem;">Weekly Study Block Recommendation</h3>
+          <div id="suggestions-schedule-list" class="schedules-container">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. POMODORO FOCUS VIEW -->
+      <section id="pomodoro-view" class="view-section">
+        <div class="view-header">
+          <h1 class="view-title">Pomodoro Focus Timer</h1>
+          <p class="view-subtitle">Block out distractions and study in highly productive chunks.</p>
+        </div>
+
+        <div class="grid-dashboard">
+          <!-- Left Panel: Clock and custom intervals -->
+          <div class="timer-container glass">
+            
+            <div class="timer-ring-wrapper">
+              <svg class="timer-svg">
+                <circle class="timer-circle-bg" cx="160" cy="160" r="140"></circle>
+                <circle id="timer-progress-ring" class="timer-circle-progress" cx="160" cy="160" r="140"></circle>
+              </svg>
+              <div class="timer-text-overlay">
+                <div id="timer-display-time" class="timer-time">25:00</div>
+                <div id="timer-display-status" class="timer-status">Focus Block</div>
+              </div>
+            </div>
+
+            <!-- Custom timings selectors -->
+            <div class="btn-group" style="margin-bottom: 2rem;">
+              <button id="timer-mode-pomodoro" class="btn-toggle active">Pomodoro</button>
+              <button id="timer-mode-short" class="btn-toggle">Short Break</button>
+              <button id="timer-mode-long" class="btn-toggle">Long Break</button>
+            </div>
+
+            <div class="timer-controls">
+              <button id="timer-btn-toggle" class="btn btn-primary btn-icon"><i data-lucide="play" id="timer-play-icon"></i></button>
+              <button id="timer-btn-reset" class="btn btn-icon"><i data-lucide="rotate-ccw"></i></button>
+              <button id="timer-btn-custom" class="btn"><i data-lucide="settings-2"></i>Custom Timings</button>
+            </div>
+
+            <!-- Custom timings inputs (hidden by default) -->
+            <div id="timer-custom-inputs" class="glass" style="display: none; padding: 1.25rem; border-radius: var(--radius-md); width: 100%; max-width: 320px; margin-top: 1rem; border-color: rgba(255,255,255,0.15);">
+              <h4 style="font-family:'Outfit', sans-serif; margin-bottom: 1rem; text-align: center;">Set Custom Intervals (Mins)</h4>
+              <div style="display: flex; gap: 0.5rem; justify-content: space-between; margin-bottom: 1rem;">
+                <div style="text-align: center; flex: 1;">
+                  <label class="form-label" style="font-size:0.75rem;">Focus</label>
+                  <input type="number" id="custom-min-pomodoro" class="form-input" min="1" max="180" value="25" style="padding: 0.5rem; text-align: center;">
+                </div>
+                <div style="text-align: center; flex: 1;">
+                  <label class="form-label" style="font-size:0.75rem;">Short</label>
+                  <input type="number" id="custom-min-short" class="form-input" min="1" max="60" value="5" style="padding: 0.5rem; text-align: center;">
+                </div>
+                <div style="text-align: center; flex: 1;">
+                  <label class="form-label" style="font-size:0.75rem;">Long</label>
+                  <input type="number" id="custom-min-long" class="form-input" min="1" max="120" value="15" style="padding: 0.5rem; text-align: center;">
+                </div>
+              </div>
+              <button id="timer-btn-save-custom" class="btn btn-primary" style="width:100%; justify-content:center;">Apply Custom Durations</button>
+            </div>
+          </div>
+
+          <!-- Right Panel: Music & Spotify -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Ambient sound controller -->
+            <div class="dashboard-card glass">
+              <h3 style="font-family:'Outfit', sans-serif; font-size:1.25rem;"><i data-lucide="music" style="color: var(--secondary); vertical-align: middle; margin-right: 0.5rem;"></i>Focus Music & Ambient Sounds</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Built-in study sound synthesis generator. Procedural audio keeps your brain in deep focus.</p>
+              
+              <div class="music-grid">
+                <div class="music-card glass-interactive" data-track="brown-noise">
+                  <div class="music-visualizer">
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                  </div>
+                  <div class="music-info">
+                    <div class="music-name">Brown Noise</div>
+                    <div class="music-genre">Deep Focus Wave</div>
+                  </div>
+                </div>
+
+                <div class="music-card glass-interactive" data-track="binaural">
+                  <div class="music-visualizer">
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                  </div>
+                  <div class="music-info">
+                    <div class="music-name">Binaural Focus</div>
+                    <div class="music-genre">40Hz Brain Sync</div>
+                  </div>
+                </div>
+
+                <div class="music-card glass-interactive" data-track="rain">
+                  <div class="music-visualizer">
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                  </div>
+                  <div class="music-info">
+                    <div class="music-name">Forest Rain</div>
+                    <div class="music-genre">Synthesized Storm</div>
+                  </div>
+                </div>
+
+                <div class="music-card glass-interactive" data-track="lofi">
+                  <div class="music-visualizer">
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                    <span class="visualizer-bar"></span>
+                  </div>
+                  <div class="music-info">
+                    <div class="music-name">Lofi Chill beats</div>
+                    <div class="music-genre">Classic study loop</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Audio adjustments -->
+              <div class="volume-control">
+                <i data-lucide="volume-2" style="font-size:1.1rem; color: var(--text-secondary);"></i>
+                <input type="range" id="sound-volume-slider" class="slider-input" min="0" max="100" value="50">
+              </div>
+            </div>
+
+            <!-- Spotify connection widget -->
+            <div class="dashboard-card glass spotify-box" style="border-color: rgba(30, 215, 96, 0.25);">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <h3 style="font-family:'Outfit', sans-serif; font-size:1.25rem;"><i data-lucide="music-4" style="color: #1ed760; vertical-align: middle; margin-right: 0.5rem;"></i>Personal Spotify Hub</h3>
+                <span class="badge" style="font-size:0.75rem; background:rgba(30, 215, 96, 0.15); color: #1ed760; padding: 0.25rem 0.5rem; border-radius: 4px;">Embed Player</span>
+              </div>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Enter your favorite study playlist URL or URI below to link and listen directly within the Aegis dashboard.</p>
+              
+              <div class="spotify-input-group">
+                <input type="text" id="spotify-playlist-url" class="form-input" placeholder="Spotify Playlist URL or URI (e.g. spotify:playlist:...)" value="https://open.spotify.com/playlist/37i9dQZF1DX8Uebhp7wV7G">
+                <button id="spotify-btn-load" class="btn" style="border-color: #1ed760; color:#1ed760;"><i data-lucide="refresh-cw"></i>Load</button>
+              </div>
+
+              <div id="spotify-widget-container" class="spotify-player-wrapper">
+                <!-- Spotify Iframe dynamically loaded here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. FLASHCARDS VIEW -->
+      <section id="flashcards-view" class="view-section">
+        <div class="view-header">
+          <h1 class="view-title">Active Recall Decks</h1>
+          <p class="view-subtitle">Generate active recall flashcards to lock core syllabus elements in long-term memory.</p>
+        </div>
+
+        <!-- Decks Home Sub-view -->
+        <div id="flashcard-home-panel">
+          <div class="flashcards-header-actions">
+            <h3 style="font-family:'Outfit', sans-serif; font-size: 1.25rem; font-weight:600;">Your Study Decks</h3>
+            <button id="flashcard-btn-create-deck" class="btn btn-primary"><i data-lucide="plus"></i>Create New Deck</button>
+          </div>
+
+          <div id="flashcards-deck-grid" class="decks-grid">
+            <!-- Decks dynamically rendered here -->
+          </div>
+        </div>
+
+        <!-- Study Session Sub-view (Hidden by default) -->
+        <div id="flashcard-study-panel" style="display: none;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <button id="study-btn-back" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;"><i data-lucide="arrow-left"></i>Exit Study</button>
+            </div>
+            <div>
+              <span id="study-deck-title" style="font-family:'Outfit', sans-serif; font-weight: 700; font-size: 1.2rem;">Physics Formulas</span>
+              <span id="study-card-counter" style="margin-left: 0.75rem; font-size: 0.85rem; background: rgba(255,255,255,0.08); padding:0.25rem 0.5rem; border-radius:4px;">1 / 10</span>
+            </div>
+            <div>
+              <button id="study-btn-add-card" class="btn" style="padding: 0.5rem 1rem; font-size: 0.85rem;"><i data-lucide="plus"></i>Add Card</button>
+            </div>
+          </div>
+
+          <div class="study-session-container">
+            <!-- 3D Card Scene -->
+            <div class="flashcard-card-scene">
+              <div id="study-flashcard" class="flashcard-card">
+                <!-- Front Side -->
+                <div class="card-face card-face-front">
+                  <div id="study-card-front" class="card-content-text">Question/Concept goes here?</div>
+                  <div class="card-hint-text">Click card to reveal answer</div>
+                </div>
+                <!-- Back Side -->
+                <div class="card-face card-face-back">
+                  <div id="study-card-back" class="card-content-text">Answer key goes here.</div>
+                  <div class="card-hint-text">How confident are you?</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Answer Feedback Buttons (visible when flipped) -->
+            <div id="study-feedback-actions" style="display: none;">
+              <h4 style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:0.75rem;">Self Assessment Scoring</h4>
+              <div class="flashcard-answers">
+                <button class="btn btn-danger" data-score="1"><i data-lucide="frown"></i>Forgot It</button>
+                <button class="btn" data-score="3" style="border-color: var(--warning); color: var(--warning);"><i data-lucide="meh"></i>Struggled</button>
+                <button class="btn" data-score="5" style="border-color: var(--success); color: var(--success);"><i data-lucide="smile"></i>Mastered</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. DOCUMENT HUB VIEW -->
+      <section id="library-view" class="view-section">
+        <div class="view-header">
+          <h1 class="view-title">Document Sync Library</h1>
+          <p class="view-subtitle">Store and access crucial syllabus files, cheat sheets, and previous year questions.</p>
+        </div>
+
+        <!-- Local Storage Alert Banner -->
+        <div id="local-storage-banner" class="alert alert-info" style="align-items: center;">
+          <i data-lucide="shield-check" style="font-size: 1.25rem; margin-top: 2px;"></i>
+          <div style="flex: 1;">
+            <strong>Secure Local Storage Active</strong><br>
+            All uploaded study materials are stored directly within your browser's persistent database. They will remain securely saved and retrievable on every visit.
+          </div>
+        </div>
+
+        <!-- Document Upload Dropzone -->
+        <div id="document-dropzone" class="upload-dropzone glass">
+          <div class="upload-icon">
+            <i data-lucide="upload-cloud"></i>
+          </div>
+          <h3>Select or Drop study documents here</h3>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.5rem;">Supports PDF, TXT, DOCX, and JPG study notes (Max 15MB)</p>
+          <input type="file" id="document-file-input" style="display: none;" multiple>
+        </div>
+
+        <!-- Files list -->
+        <div class="dashboard-card glass">
+          <h3 style="font-family:'Outfit', sans-serif; font-size:1.25rem; margin-bottom:1.5rem;"><i data-lucide="file-text" style="color: var(--primary); vertical-align: middle; margin-right: 0.5rem;"></i>Study Material Index</h3>
+          
+          <div id="library-docs-grid" class="docs-grid">
+            <!-- Files list rendered via JS -->
+            <p style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-secondary);">No documents uploaded yet. Upload a syllabus cheat sheet or exam syllabus to get started.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="modal-backdrop">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3 class="modal-title"><i data-lucide="settings" style="vertical-align: middle; margin-right: 0.5rem; color: var(--primary);"></i>Planner Configuration</h3>
+        <button id="settings-btn-close" class="modal-close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Local Document Storage Info -->
+        <h4 style="font-family:'Outfit', sans-serif; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Local Document Storage</h4>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.5;">
+          Pheonix uses the browser's high-speed, persistent IndexedDB database. This ensures your study materials, PDFs, and flashcard images remain 100% offline-accessible and are saved securely on your device.
+        </p>
+
+        <!-- Custom Spotify Widget section -->
+        <h4 style="font-family:'Outfit', sans-serif; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top: 1.5rem; margin-bottom: 1rem;">Spotify Playlist Embed</h4>
+        <div class="form-group">
+          <label class="form-label" for="settings-spotify-uri">Default Study Playlist URL</label>
+          <input type="text" id="settings-spotify-uri" class="form-input" placeholder="Spotify URL">
+        </div>
+
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button id="settings-btn-cancel" class="btn">Cancel</button>
+        <button id="settings-btn-save" class="btn btn-primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD FLASHCARD MODAL (Scoped inside flashcard study flow) -->
+  <div id="add-card-modal" class="modal-backdrop">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Recall Card</h3>
+        <button id="add-card-btn-close" class="modal-close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="new-card-front">Front: Concept / Question / Prompt</label>
+          <textarea id="new-card-front" class="form-input" rows="3" placeholder="e.g. What is the First Law of Thermodynamics?" style="width: 100%; resize: vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="new-card-back">Back: Detailed Explanation / Answer</label>
+          <textarea id="new-card-back" class="form-input" rows="4" placeholder="e.g. Energy cannot be created or destroyed, only transformed from one form to another." style="width: 100%; resize: vertical;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button id="add-card-btn-cancel" class="btn">Cancel</button>
+        <button id="add-card-btn-save" class="btn btn-primary">Add Card</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE DECK MODAL -->
+  <div id="create-deck-modal" class="modal-backdrop">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Study Deck</h3>
+        <button id="create-deck-btn-close" class="modal-close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="new-deck-title">Deck Title</label>
+          <input type="text" id="new-deck-title" class="form-input" placeholder="e.g. UPSC Polity - Fundamental Rights">
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+        <button id="create-deck-btn-cancel" class="btn">Cancel</button>
+        <button id="create-deck-btn-save" class="btn btn-primary">Create Deck</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOAD THE LIBRARIES & CUSTOM MODULES -->
+  <script src="js/storage.js"></script>
+  <script src="js/planner.js"></script>
+  <script src="js/pomodoro.js"></script>
+  <script src="js/flashcards.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
