@@ -131,7 +131,21 @@ class AegisPlanner {
     this.renderActivePlanOnDashboard();
   }
 
-  loadActivePlan() {
+  async loadActivePlan() {
+    try {
+      const res = await fetch('/api/planner');
+      if (res.ok) {
+        const plan = await res.json();
+        if (plan && plan.examTitle) {
+          this.activePlan = plan;
+          this.renderActivePlanOnDashboard();
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('Java backend offline for active plan, loading local storage:', e);
+    }
+
     const saved = localStorage.getItem('aegis_active_study_plan');
     if (saved) {
       try {
@@ -154,19 +168,30 @@ class AegisPlanner {
     }
   }
 
-  generatePlan() {
+  async generatePlan() {
     const examCode = document.getElementById('planner-exam-select').value;
     const hours = parseInt(document.getElementById('planner-hours-input').value) || 6;
     const timeline = document.getElementById('planner-timeline-select').value;
 
+    try {
+      const res = await fetch('/api/planner/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ examCode: examCode, hours: hours, timeline: timeline })
+      });
+      if (res.ok) {
+        this.proposedPlan = await res.json();
+        this.renderSuggestionsBox();
+        return;
+      }
+    } catch (e) {
+      console.warn('Java backend offline for planner generate, fallback to local math:', e);
+    }
+
     const sourceSyllabus = this.examSyllabi[examCode];
     if (!sourceSyllabus) return;
 
-    // Compile dynamic factors into study plan
     const hoursPerSubject = Math.round((hours * 0.8) * 10) / 10;
-    const weeklyFocusHours = hours * 6; // 6 study days assumed
-
-    // Assemble proposal object
     this.proposedPlan = {
       examCode: examCode,
       examTitle: sourceSyllabus.title,
@@ -174,7 +199,6 @@ class AegisPlanner {
       timelineMonths: timeline,
       strategy: sourceSyllabus.strategy,
       weeklyPattern: sourceSyllabus.weeklyPattern.map(item => {
-        // Adjust task specificity based on hours configured
         let adjustedFocus = item.focus;
         if (hours >= 10) {
           adjustedFocus += ` (High intensity session: ${hoursPerSubject}h core, 2h revision, 1h testing)`;
@@ -183,18 +207,20 @@ class AegisPlanner {
         } else {
           adjustedFocus += ` (Sprint session: 2h focus core, 0.5h micro-test)`;
         }
-        return {
-          day: item.day,
-          focus: adjustedFocus
-        };
+        return { day: item.day, focus: adjustedFocus };
       }),
       tips: sourceSyllabus.tips,
       generatedAt: new Date().toISOString()
     };
 
-    // Render suggestions preview box
+    this.renderSuggestionsBox();
+  }
+
+  renderSuggestionsBox() {
+    if (!this.proposedPlan) return;
+    const weeklyFocusHours = this.proposedPlan.hoursPerDay * 6;
     document.getElementById('suggestions-exam-title').innerText = `${this.proposedPlan.examTitle} Syllabus Suggestion`;
-    document.getElementById('suggestions-exam-meta').innerText = `${this.proposedPlan.timelineMonths} Month Timeline | Target: ${hours} Hours/Day (${weeklyFocusHours}h/week)`;
+    document.getElementById('suggestions-exam-meta').innerText = `${this.proposedPlan.timelineMonths} Month Timeline | Target: ${this.proposedPlan.hoursPerDay} Hours/Day (${weeklyFocusHours}h/week)`;
     document.getElementById('suggestions-strategy-text').innerText = this.proposedPlan.strategy;
 
     const listContainer = document.getElementById('suggestions-schedule-list');
@@ -211,23 +237,37 @@ class AegisPlanner {
     });
 
     document.getElementById('planner-suggestions-box').style.display = 'block';
-    
-    // Smooth scroll down to suggestions box
     document.getElementById('planner-suggestions-box').scrollIntoView({ behavior: 'smooth' });
   }
 
-  applyPlanToDashboard() {
+  async applyPlanToDashboard() {
     if (!this.proposedPlan) return;
     
-    this.activePlan = this.proposedPlan;
+    try {
+      const res = await fetch('/api/planner/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          examCode: this.proposedPlan.examCode,
+          hours: this.proposedPlan.hoursPerDay,
+          timeline: this.proposedPlan.timelineMonths
+        })
+      });
+      if (res.ok) {
+        this.activePlan = await res.json();
+      } else {
+        this.activePlan = this.proposedPlan;
+      }
+    } catch (e) {
+      console.warn('Java backend apply offline:', e);
+      this.activePlan = this.proposedPlan;
+    }
+
     localStorage.setItem('aegis_active_study_plan', JSON.stringify(this.activePlan));
-    
-    // Save target exam to dashboard stats
     localStorage.setItem('aegis_target_exam', this.activePlan.examTitle);
     window.dispatchEvent(new CustomEvent('aegis_exam_change', { detail: { exam: this.activePlan.examTitle } }));
     
     this.renderActivePlanOnDashboard();
-    
     alert('Syllabus suggestion schedule successfully applied to your dashboard!');
   }
 

@@ -5,7 +5,7 @@
 class AegisApp {
   constructor() {
     this.currentView = 'dashboard';
-    
+
     // Focus Statistics
     this.totalFocusMins = parseInt(localStorage.getItem('aegis_total_focus_mins') || '0');
     this.streakCount = parseInt(localStorage.getItem('aegis_streak_count') || '1');
@@ -23,7 +23,7 @@ class AegisApp {
     this.setupRouter();
     this.setupSettingsModal();
     this.setupGlobalEventListeners();
-    
+
     // 3. Setup Library Document Upload UI
     this.setupLibraryUI();
 
@@ -31,14 +31,14 @@ class AegisApp {
     this.renderStats();
     this.checkStreak();
     this.renderStreakGauge();
-    
+
     // 5. Initialize Icons
     lucide.createIcons();
   }
 
   setupRouter() {
     const menuItems = document.querySelectorAll('.sidebar-menu .menu-item');
-    
+
     menuItems.forEach(item => {
       item.addEventListener('click', () => {
         const viewName = item.getAttribute('data-view');
@@ -51,7 +51,7 @@ class AegisApp {
 
   switchView(viewName) {
     this.currentView = viewName;
-    
+
     // Toggle active sidebar link
     document.querySelectorAll('.sidebar-menu .menu-item').forEach(el => el.classList.remove('active'));
     document.querySelector(`.sidebar-menu .menu-item[data-view="${viewName}"]`).classList.add('active');
@@ -83,7 +83,7 @@ class AegisApp {
     };
 
     trigger.addEventListener('click', openSettings);
-    
+
     // Close settings
     const closeSettings = () => modal.classList.remove('active');
     closeBtn.addEventListener('click', closeSettings);
@@ -167,7 +167,7 @@ class AegisApp {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       // Enforce file size limit of 15MB
       if (file.size > 15 * 1024 * 1024) {
         alert(`File ${file.name} exceeds 15MB limit.`);
@@ -208,7 +208,7 @@ class AegisApp {
         // Size formatting
         const kb = Math.round((doc.size / 1024) * 10) / 10;
         const sizeStr = kb > 1020 ? `${(Math.round((kb / 1024) * 10) / 10)} MB` : `${kb} KB`;
-        
+
         // Date formatting
         const date = new Date(doc.addedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
@@ -257,6 +257,20 @@ class AegisApp {
   }
 
   async renderStats() {
+    try {
+      const res = await fetch('/api/timer');
+      if (res.ok) {
+        const statsData = await res.json();
+        this.totalFocusMins = statsData.totalFocusMins || this.totalFocusMins;
+        if (statsData.streakCount) this.streakCount = statsData.streakCount;
+        if (statsData.targetExam && statsData.targetExam !== 'None Selected') {
+          localStorage.setItem('aegis_target_exam', statsData.targetExam);
+        }
+      }
+    } catch (e) {
+      console.warn('Java backend stats offline:', e);
+    }
+
     // 1. Total Focus Hour display
     const hrs = Math.floor(this.totalFocusMins / 60);
     const mins = this.totalFocusMins % 60;
@@ -278,12 +292,16 @@ class AegisApp {
 
     // 3. Flashcards count
     let cardCount = 0;
-    const savedDecks = localStorage.getItem('aegis_flashcard_decks');
-    if (savedDecks) {
-      try {
-        const decks = JSON.parse(savedDecks);
-        decks.forEach(d => cardCount += d.cards.length);
-      } catch (e) {}
+    if (window.AegisFlashcardManager && window.AegisFlashcardManager.decks) {
+      window.AegisFlashcardManager.decks.forEach(d => cardCount += d.cards.length);
+    } else {
+      const savedDecks = localStorage.getItem('aegis_flashcard_decks');
+      if (savedDecks) {
+        try {
+          const decks = JSON.parse(savedDecks);
+          decks.forEach(d => cardCount += d.cards.length);
+        } catch (e) { }
+      }
     }
     const cardStat = document.getElementById('dash-stat-cards');
     if (cardStat) {
@@ -297,18 +315,18 @@ class AegisApp {
       if (docStat) {
         docStat.innerText = docs.length;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   checkStreak() {
     const today = new Date().toDateString();
-    
+
     if (this.lastFocusDate) {
       const lastDate = new Date(this.lastFocusDate);
       const todayDate = new Date(today);
       const diffTime = Math.abs(todayDate - lastDate);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays > 1) {
         // Streak broken
         this.streakCount = 0;
@@ -319,7 +337,7 @@ class AegisApp {
 
   updateStreak() {
     const today = new Date().toDateString();
-    
+
     if (this.lastFocusDate !== today) {
       this.streakCount++;
       this.lastFocusDate = today;
@@ -334,7 +352,7 @@ class AegisApp {
     if (!gauge) return;
 
     gauge.innerHTML = '';
-    
+
     // Render 7 streak flame nodes representing continuous study habit levels
     const totalFlames = 7;
     const filledFlames = Math.min(totalFlames, this.streakCount);
@@ -348,7 +366,7 @@ class AegisApp {
       flame.style.alignItems = 'center';
       flame.style.justifyContent = 'center';
       flame.style.fontSize = '0.9rem';
-      
+
       if (i < filledFlames) {
         flame.style.background = 'rgba(236, 72, 153, 0.15)';
         flame.style.color = 'var(--accent)';
@@ -360,7 +378,7 @@ class AegisApp {
         flame.style.border = '1px solid var(--border-color)';
         flame.innerHTML = '<i data-lucide="circle" style="width:10px;"></i>';
       }
-      
+
       gauge.appendChild(flame);
     }
     lucide.createIcons();

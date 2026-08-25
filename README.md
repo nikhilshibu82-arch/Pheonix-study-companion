@@ -115,9 +115,19 @@ Files remain sandbox-isolated, meaning they do not leave the client device, pres
 1. Clone this repository:
    ```bash
    git clone https://github.com/nikhilshibu82-arch/Pheonix-study-companion.git
+   cd Pheonix-study-companion
    ```
-2. Open the directory and launch a simple HTTP server:
-   ```bash
-   python -m http.server 8000
-   ```
-3. Navigate to `http://localhost:8000` in your web browser.
+2. Compile and launch the Java REST Backend Server:
+   * **Windows (PowerShell)**:
+     ```powershell
+     javac -d bin (Get-ChildItem -Recurse -Filter *.java src).FullName
+     java -cp bin com.pheonix.PheonixServer
+     ```
+   * **Linux / macOS**:
+     ```bash
+     mkdir -p bin
+     javac -d bin $(find src -name "*.java")
+     java -cp bin com.pheonix.PheonixServer
+     ```
+3. Open your web browser and navigate to `http://localhost:8080`.
+

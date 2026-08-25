@@ -172,16 +172,24 @@ class AegisPomodoro {
     this.updateDisplay();
   }
 
-  completeTimer() {
+  async completeTimer() {
     this.pauseTimer();
     this.playCompletionSound();
     
     if (this.currentMode === 'pomodoro') {
-      // Trigger event to notify dashboard of focused study time
       const focusedMinutes = this.durations.pomodoro;
+
+      try {
+        await fetch('/api/timer/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ minutes: focusedMinutes })
+        });
+      } catch (e) {
+        console.warn('Java backend focus complete offline:', e);
+      }
+
       window.dispatchEvent(new CustomEvent('aegis_focus_completed', { detail: { minutes: focusedMinutes } }));
-      
-      // Auto toggle to short break
       alert('Focus block complete! Time to take a refreshing break.');
       this.setMode('short');
     } else {

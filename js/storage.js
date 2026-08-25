@@ -5,26 +5,21 @@
 
 class AegisStorageManager {
   constructor() {
+    this.apiBase = '/api/documents';
     this.dbName = 'AegisPlannerDB';
     this.dbVersion = 1;
     this.db = null;
   }
 
-  // Initialize browser database
+  // Initialize storage module
   async init() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const request = indexedDB.open(this.dbName, this.dbVersion);
-      
-      request.onerror = (event) => {
-        console.error('IndexedDB Error:', event);
-        reject(event);
-      };
-
       request.onsuccess = (event) => {
         this.db = event.target.result;
         resolve(this.db);
       };
-
+      request.onerror = () => resolve(null);
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
         if (!db.objectStoreNames.contains('documents')) {
@@ -34,46 +29,70 @@ class AegisStorageManager {
     });
   }
 
-  // Retrieve all locally stored documents
+  // Retrieve documents from Java Backend REST API (with local cache fallback)
   async getDocuments() {
-    return new Promise((resolve, reject) => {
+    try {
+      const res = await fetch(this.apiBase);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn('Java Backend offline, falling back to local cache:', e);
+    }
+
+    return new Promise((resolve) => {
       if (!this.db) return resolve([]);
       const transaction = this.db.transaction(['documents'], 'readonly');
       const store = transaction.objectStore('documents');
       const request = store.getAll();
-
-      request.onsuccess = () => {
-        resolve(request.result || []);
-      };
-
-      request.onerror = (err) => {
-        reject(err);
-      };
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => resolve([]);
     });
   }
 
-  // Upload (save) document to IndexedDB
+  // Upload document to Java Backend REST API
   async uploadDocument(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
+        const payload = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content: e.target.result
+        };
+
+        try {
+          const res = await fetch(this.apiBase, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          if (res.ok) {
+            const doc = await res.json();
+            return resolve(doc);
+          }
+        } catch (err) {
+          console.warn('Failed to upload to Java backend, writing to local storage:', err);
+        }
+
+        // Fallback local write
         const doc = {
           id: 'local_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
           name: file.name,
           type: file.type,
           size: file.size,
-          content: e.target.result, // base64 DataURL
+          content: e.target.result,
           addedAt: new Date().toISOString(),
           isDrive: false
         };
 
-        const transaction = this.db.transaction(['documents'], 'readwrite');
-        const store = transaction.objectStore('documents');
-        const request = store.put(doc);
-
-        request.onsuccess = () => resolve(doc);
-        request.onerror = (err) => reject(err);
+        if (this.db) {
+          const tx = this.db.transaction(['documents'], 'readwrite');
+          tx.objectStore('documents').put(doc);
+        }
+        resolve(doc);
       };
 
       reader.onerror = (err) => reject(err);
@@ -81,16 +100,21 @@ class AegisStorageManager {
     });
   }
 
-  // Delete document by ID
+  // Delete document by ID via Java Backend REST API
   async deleteDocument(id) {
-    return new Promise((resolve, reject) => {
-      if (!this.db) return resolve(false);
-      const transaction = this.db.transaction(['documents'], 'readwrite');
-      const store = transaction.objectStore('documents');
-      const request = store.delete(id);
+    try {
+      const res = await fetch(`${this.apiBase}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (res.ok) return true;
+    } catch (e) {
+      console.warn('Failed to delete on Java backend:', e);
+    }
 
+    return new Promise((resolve) => {
+      if (!this.db) return resolve(false);
+      const tx = this.db.transaction(['documents'], 'readwrite');
+      const request = tx.objectStore('documents').delete(id);
       request.onsuccess = () => resolve(true);
-      request.onerror = (err) => reject(err);
+      request.onerror = () => resolve(false);
     });
   }
 }

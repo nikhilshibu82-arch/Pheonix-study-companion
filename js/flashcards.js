@@ -17,7 +17,19 @@ class AegisFlashcards {
     this.renderDecks();
   }
 
-  loadDecks() {
+  async loadDecks() {
+    try {
+      const res = await fetch('/api/flashcards');
+      if (res.ok) {
+        this.decks = await res.json();
+        this.renderDecks();
+        this.notifyCardCount();
+        return;
+      }
+    } catch (e) {
+      console.warn('Java Backend offline for flashcards, reading from localStorage:', e);
+    }
+
     const saved = localStorage.getItem('aegis_flashcard_decks');
     if (saved) {
       try {
@@ -27,17 +39,21 @@ class AegisFlashcards {
       }
     }
 
-    // Seed default study decks if empty (perfect for competitive exam students)
     if (this.decks.length === 0) {
       this.seedDefaultDecks();
+    } else {
+      this.renderDecks();
+      this.notifyCardCount();
     }
   }
 
   saveDecks() {
     localStorage.setItem('aegis_flashcard_decks', JSON.stringify(this.decks));
     this.renderDecks();
-    
-    // Dispatch stat count update
+    this.notifyCardCount();
+  }
+
+  notifyCardCount() {
     let count = 0;
     this.decks.forEach(d => count += d.cards.length);
     window.dispatchEvent(new CustomEvent('aegis_cards_count_change', { detail: { count: count } }));
@@ -218,7 +234,21 @@ class AegisFlashcards {
     });
   }
 
-  createDeck(title) {
+  async createDeck(title) {
+    try {
+      const res = await fetch('/api/flashcards/deck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title })
+      });
+      if (res.ok) {
+        await this.loadDecks();
+        return;
+      }
+    } catch (e) {
+      console.warn('Java backend offline, creating deck locally:', e);
+    }
+
     const newDeck = {
       id: 'deck_' + Date.now(),
       title: title,
@@ -285,15 +315,28 @@ class AegisFlashcards {
     }
   }
 
-  scoreCurrentCard(score) {
+  async scoreCurrentCard(score) {
     const activeCard = this.currentSessionCards[this.currentCardIndex];
     
-    // Find card reference in global decks structure to preserve state
+    try {
+      await fetch('/api/flashcards/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deckId: this.activeDeck.id,
+          cardId: activeCard.id,
+          score: score
+        })
+      });
+    } catch (e) {
+      console.warn('Java backend score update offline:', e);
+    }
+
+    // Local fallback update
     const deckIndex = this.decks.findIndex(d => d.id === this.activeDeck.id);
-    const cardIndex = this.decks[deckIndex].cards.findIndex(c => c.id === activeCard.id);
+    const cardIndex = deckIndex !== -1 ? this.decks[deckIndex].cards.findIndex(c => c.id === activeCard.id) : -1;
     
     if (cardIndex !== -1) {
-      // Leitner confidence logic: score 1 = reset, score 3 = keep, score 5 = master
       if (score === 1) {
         this.decks[deckIndex].cards[cardIndex].confidence = 1;
       } else if (score === 5) {
@@ -315,9 +358,27 @@ class AegisFlashcards {
     }
   }
 
-  addCardToActiveDeck(front, back) {
+  async addCardToActiveDeck(front, back) {
     if (!this.activeDeck) return;
     
+    try {
+      const res = await fetch('/api/flashcards/card', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deckId: this.activeDeck.id,
+          front: front,
+          back: back
+        })
+      });
+      if (res.ok) {
+        await this.loadDecks();
+        return;
+      }
+    } catch (e) {
+      console.warn('Java backend add card offline:', e);
+    }
+
     const newCard = {
       id: 'card_' + Date.now(),
       front: front,
@@ -331,7 +392,6 @@ class AegisFlashcards {
       this.decks[deckIndex].cards.push(newCard);
       this.saveDecks();
       
-      // Update session tracking if in study loop
       this.currentSessionCards.push(newCard);
       document.getElementById('study-card-counter').innerText = `${this.currentCardIndex + 1} / ${this.currentSessionCards.length}`;
     }
